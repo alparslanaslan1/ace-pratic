@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Cloud Associate Cloud Engineer - Pratik Quiz</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- MENU SCREEN -->
+  <div id="screen-menu" class="screen">
+    <h1>Associate Cloud Engineer - Pratik Quiz</h1>
+    <p class="subtitle">Bir mod seçerek başla</p>
+
+    <div class="menu-section">
+      <h3 class="menu-section-title">🔀 Genel Pratik</h3>
+      <div class="menu-buttons">
+        <button class="mode-btn" data-mode="all">Tüm Sorular (Karışık) <span class="badge" id="badge-all"></span></button>
+        <button class="mode-btn" data-mode="sirali">Sıralı Sorular (1 - N)</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h3 class="menu-section-title">📝 Sınav Modu</h3>
+      <div class="menu-buttons">
+        <button class="mode-btn" data-mode="exam">Sınav: 50 Rastgele Soru</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h3 class="menu-section-title">🔢 Çoklu Cevaplı Sorular</h3>
+      <div class="menu-buttons menu-buttons-row">
+        <button class="mode-btn" data-mode="multi">Karışık <span class="badge" id="badge-multi"></span></button>
+        <button class="mode-btn" data-mode="multi_sirali">Sıralı</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h3 class="menu-section-title">🎯 Benzersiz Kelime Modları</h3>
+      <p class="menu-section-hint">Doğru şıkkı, şıkların sırası karışsa bile ilk/son kelimesinden tanımayı öğren.</p>
+
+      <p class="menu-subgroup-title">Benzersiz Son Kelime <span class="badge" id="badge-bson"></span></p>
+      <div class="menu-buttons menu-buttons-row">
+        <button class="mode-btn" data-mode="bson">Karışık</button>
+        <button class="mode-btn" data-mode="bson_sirali">Sıralı</button>
+      </div>
+
+      <p class="menu-subgroup-title">Benzersiz Son Kelime 2 <span class="badge" id="badge-bson2"></span></p>
+      <div class="menu-buttons menu-buttons-row">
+        <button class="mode-btn" data-mode="bson2">Karışık</button>
+        <button class="mode-btn" data-mode="bson2_sirali">Sıralı</button>
+      </div>
+
+      <p class="menu-subgroup-title">Benzersiz İlk Kelime <span class="badge" id="badge-bilk"></span></p>
+      <div class="menu-buttons menu-buttons-row">
+        <button class="mode-btn" data-mode="bilk">Karışık</button>
+        <button class="mode-btn" data-mode="bilk_sirali">Sıralı</button>
+      </div>
+    </div>
+
+    <div class="menu-section">
+      <h3 class="menu-section-title">🧠 Akıllı Öğrenme</h3>
+      <div class="menu-buttons menu-buttons-row">
+        <button class="mode-btn" data-mode="wrong">Yanlışlarım <span class="badge" id="badge-wrong">0</span></button>
+        <button class="mode-btn secondary-btn" id="btn-reset-wrong">Sıfırla</button>
+      </div>
+    </div>
+
+    <p class="footer-note" id="footer-note"></p>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="screen-quiz" class="screen" style="display:none;">
+    <div class="quiz-header">
+      <div id="mode-label" class="mode-label"></div>
+      <div id="real-qno" class="real-qno"></div>
+      <div id="progress-text" class="progress-text"></div>
+    </div>
+    <div class="question-card">
+      <h2 id="question-text"></h2>
+      <div id="options-container" class="options-container"></div>
+      <div id="multi-submit-wrap" style="display:none;">
+        <button id="btn-submit-multi" class="action-btn">Cevapla</button>
+      </div>
+    </div>
+    <div class="quiz-footer">
+      <button id="btn-prev" class="action-btn secondary" style="display:none;">&larr; Önceki Soru</button>
+      <button id="btn-next" class="action-btn" style="display:none;">Sonraki Soru &rarr;</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="screen-results" class="screen" style="display:none;">
+    <h1>Sonuçlar</h1>
+    <div class="results-card">
+      <p id="results-score" class="results-score"></p>
+      <p id="results-percent" class="results-percent"></p>
+      <p id="results-pass" class="results-pass" style="display:none;"></p>
+    </div>
+    <div class="menu-buttons">
+      <button id="btn-retry" class="action-btn">Tekrar Dene</button>
+      <button id="btn-menu" class="action-btn secondary">Menüye Dön</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
