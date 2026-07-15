@@ -46,18 +46,21 @@
       <div class="menu-buttons menu-buttons-row">
         <button class="mode-btn" data-mode="bson">Karışık</button>
         <button class="mode-btn" data-mode="bson_sirali">Sıralı</button>
+        <button class="mode-btn card-btn" data-card="bson">🃏 Kart</button>
       </div>
 
       <p class="menu-subgroup-title">Benzersiz Son Kelime 2 <span class="badge" id="badge-bson2"></span></p>
       <div class="menu-buttons menu-buttons-row">
         <button class="mode-btn" data-mode="bson2">Karışık</button>
         <button class="mode-btn" data-mode="bson2_sirali">Sıralı</button>
+        <button class="mode-btn card-btn" data-card="bson2">🃏 Kart</button>
       </div>
 
       <p class="menu-subgroup-title">Benzersiz İlk Kelime <span class="badge" id="badge-bilk"></span></p>
       <div class="menu-buttons menu-buttons-row">
         <button class="mode-btn" data-mode="bilk">Karışık</button>
         <button class="mode-btn" data-mode="bilk_sirali">Sıralı</button>
+        <button class="mode-btn card-btn" data-card="bilk">🃏 Kart</button>
       </div>
     </div>
 
@@ -89,6 +92,44 @@
     <div class="quiz-footer">
       <button id="btn-prev" class="action-btn secondary" style="display:none;">&larr; Önceki Soru</button>
       <button id="btn-next" class="action-btn" style="display:none;">Sonraki Soru &rarr;</button>
+    </div>
+  </div>
+
+  <!-- CARD SCREEN -->
+  <div id="screen-card" class="screen" style="display:none;">
+    <div class="quiz-header">
+      <div id="card-mode-label" class="mode-label"></div>
+      <div id="card-progress" class="progress-text"></div>
+    </div>
+
+    <div id="flashcard" class="flashcard">
+      <div class="flashcard-inner" id="flashcard-inner">
+
+        <!-- FRONT: anahtar kelime -->
+        <div class="flashcard-front">
+          <div class="card-qno" id="card-qno"></div>
+          <p class="card-hint-label" id="card-hint-label"></p>
+          <div class="card-keyword" id="card-keyword"></div>
+          <button class="card-reveal-btn" id="btn-reveal">Cevabı Gör ↓</button>
+        </div>
+
+        <!-- BACK: tam cevap + soru -->
+        <div class="flashcard-back">
+          <div class="card-back-answer" id="card-back-answer"></div>
+          <div class="card-back-question" id="card-back-question"></div>
+          <div class="card-back-btns">
+            <button class="card-verdict-btn verdict-wrong" id="btn-card-wrong">✗ Bilmedim</button>
+            <button class="card-verdict-btn verdict-correct" id="btn-card-correct">✓ Bildim</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="quiz-footer">
+      <button id="btn-card-prev" class="action-btn secondary" style="display:none;">&larr; Önceki</button>
+      <button id="btn-card-menu" class="action-btn secondary">Menüye Dön</button>
+      <button id="btn-card-next" class="action-btn" style="display:none;">Sonraki &rarr;</button>
     </div>
   </div>
 

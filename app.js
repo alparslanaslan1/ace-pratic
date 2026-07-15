@@ -30,6 +30,7 @@
 
   var screenMenu = document.getElementById("screen-menu");
   var screenQuiz = document.getElementById("screen-quiz");
+  var screenCard = document.getElementById("screen-card");
   var screenResults = document.getElementById("screen-results");
 
   var modeLabelEl = document.getElementById("mode-label");
@@ -167,6 +168,7 @@
   function showScreen(screen) {
     screenMenu.style.display = "none";
     screenQuiz.style.display = "none";
+    screenCard.style.display = "none";
     screenResults.style.display = "none";
     screen.style.display = "block";
     if (screen === screenMenu) updateMenuBadges();
@@ -194,6 +196,7 @@
   }
 
   function startQuiz(mode) {
+    cardState.active = false;
     var questions = getQuestionsForMode(mode);
     if (questions.length === 0) {
       alert("Bu modda henüz soru yok.");
@@ -408,6 +411,147 @@
     }
   }
 
+  // ---------- Card (flashcard) engine ----------
+
+  var CARD_LABELS = {
+    bson: "Benzersiz Son Kelime",
+    bson2: "Benzersiz Son 2 Kelime",
+    bilk: "Benzersiz İlk Kelime"
+  };
+
+  var cardState = {
+    pool: "bson",
+    questions: [],
+    index: 0,
+    flipped: false,
+    scores: [], // per card: null | "correct" | "wrong"
+    active: false
+  };
+
+  function getKeyword(q, pool) {
+    var cl = q.correct[0];
+    var ct = q.options[cl];
+    if (pool === "bilk") return wordsOf(ct)[0];
+    if (pool === "bson2") return wordsOf(ct).slice(-2).join(" ");
+    return wordsOf(ct).slice(-1)[0]; // bson
+  }
+
+  function getHintLabel(pool) {
+    if (pool === "bilk") return "İlk Kelime";
+    if (pool === "bson2") return "Son 2 Kelime";
+    return "Son Kelime";
+  }
+
+  function startCards(pool) {
+    var src = POOLS[pool];
+    if (!src || src.length === 0) { alert("Bu modda soru yok."); return; }
+    cardState.pool = pool;
+    cardState.questions = shuffleArray(src);
+    cardState.index = 0;
+    cardState.flipped = false;
+    cardState.scores = new Array(cardState.questions.length).fill(null);
+    cardState.active = true;
+    showScreen(screenCard);
+    renderCard();
+  }
+
+  function renderCard() {
+    var q = cardState.questions[cardState.index];
+    var pool = cardState.pool;
+    var cl = q.correct[0];
+    var ct = q.options[cl];
+    var keyword = getKeyword(q, pool);
+
+    // header
+    document.getElementById("card-mode-label").textContent = CARD_LABELS[pool] + " · 🃏 Kart Modu";
+    var correct = cardState.scores.filter(function(s){ return s === "correct"; }).length;
+    var wrong   = cardState.scores.filter(function(s){ return s === "wrong"; }).length;
+    document.getElementById("card-progress").textContent =
+      (cardState.index + 1) + " / " + cardState.questions.length +
+      "  ✓ " + correct + "  ✗ " + wrong;
+
+    // front
+    document.getElementById("card-qno").textContent = "Soru " + q.id;
+    document.getElementById("card-hint-label").textContent = getHintLabel(pool);
+    document.getElementById("card-keyword").textContent = keyword;
+
+    // back
+    document.getElementById("card-back-answer").textContent = ct;
+    document.getElementById("card-back-question").textContent = q.text;
+
+    // reset flip
+    cardState.flipped = false;
+    document.getElementById("flashcard-inner").classList.remove("flipped");
+
+    // nav
+    var isLast = cardState.index === cardState.questions.length - 1;
+    document.getElementById("btn-card-prev").style.display = cardState.index > 0 ? "inline-block" : "none";
+    document.getElementById("btn-card-next").style.display = isLast ? "none" : "inline-block";
+  }
+
+  document.getElementById("btn-reveal").addEventListener("click", function () {
+    if (cardState.flipped) return;
+    cardState.flipped = true;
+    document.getElementById("flashcard-inner").classList.add("flipped");
+  });
+
+  function cardVerdict(verdict) {
+    cardState.scores[cardState.index] = verdict;
+    var isLast = cardState.index === cardState.questions.length - 1;
+    if (isLast) {
+      // Show summary on results screen
+      var correct = cardState.scores.filter(function(s){ return s === "correct"; }).length;
+      var total = cardState.questions.length;
+      var pct = Math.round((correct / total) * 100);
+      showScreen(screenResults);
+      resultsScore.textContent = "Bildim: " + correct + " / " + total;
+      resultsPercent.textContent = "Başarı: %" + pct;
+      resultsPass.style.display = "none";
+    } else {
+      cardState.index++;
+      renderCard();
+    }
+  }
+
+  document.getElementById("btn-card-wrong").addEventListener("click", function () {
+    cardVerdict("wrong");
+  });
+  document.getElementById("btn-card-correct").addEventListener("click", function () {
+    cardVerdict("correct");
+  });
+
+  document.getElementById("btn-card-prev").addEventListener("click", function () {
+    if (cardState.index > 0) { cardState.index--; renderCard(); }
+  });
+  document.getElementById("btn-card-next").addEventListener("click", function () {
+    if (cardState.index < cardState.questions.length - 1) { cardState.index++; renderCard(); }
+  });
+  document.getElementById("btn-card-menu").addEventListener("click", function () {
+    showScreen(screenMenu);
+  });
+
+  document.querySelectorAll(".card-btn[data-card]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      startCards(btn.dataset.card);
+    });
+  });
+
+  // Spacebar / arrow keys for card mode
+  document.addEventListener("keydown", function (e) {
+    if (screenCard.style.display !== "block") return;
+    if (e.key === " " || e.key === "Enter") {
+      if (!cardState.flipped) {
+        document.getElementById("btn-reveal").click();
+      }
+    } else if (e.key === "ArrowRight" && cardState.flipped) {
+      cardVerdict("correct");
+    } else if (e.key === "ArrowLeft" && cardState.flipped) {
+      cardVerdict("wrong");
+    }
+  });
+
+  // ---------- btnRetry: handle card mode re-start ----------
+
   // Event wiring
   document.querySelectorAll(".mode-btn[data-mode]").forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -435,7 +579,11 @@
   });
 
   btnRetry.addEventListener("click", function () {
-    startQuiz(state.mode);
+    if (cardState.active) {
+      startCards(cardState.pool);
+    } else {
+      startQuiz(state.mode);
+    }
   });
 
   btnMenu.addEventListener("click", function () {
