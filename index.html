@@ -4352,52 +4352,6 @@ const QUESTIONS = [
   document.getElementById("btn-srs").addEventListener("click", function () {
     startSrs(QUESTIONS, "");
   });
-  // Yarı desteler — sorular id sırasına göre bölünür (ilk 258 / son 258)
-  var SRS_SORTED = QUESTIONS.slice().sort(function (a, b) { return a.id - b.id; });
-  var SRS_HALF = Math.ceil(SRS_SORTED.length / 2); // 258
-  document.getElementById("btn-srs-first").addEventListener("click", function () {
-    startSrs(SRS_SORTED.slice(0, SRS_HALF), "İlk Yarı (1–" + SRS_HALF + ")");
-  });
-  document.getElementById("btn-srs-second").addEventListener("click", function () {
-    startSrs(SRS_SORTED.slice(SRS_HALF), "İkinci Yarı (" + (SRS_HALF + 1) + "–" + SRS_SORTED.length + ")");
-  });
-  // Benzersiz kelime desteleri (gruba göre filtrele, id sırasında ikiye böl)
-  function srsGroupPool(group) {
-    return SRS_SORTED.filter(function (q) { return (q.groups || []).indexOf(group) !== -1; });
-  }
-  var BSK_POOL = srsGroupPool("benzersiz");        // Benzersiz Son Kelime
-  var BS2_POOL = srsGroupPool("benzersizson2");    // Benzersiz Son 2 Kelime
-  var BSK_HALF = Math.ceil(BSK_POOL.length / 2);
-  var BS2_HALF = Math.ceil(BS2_POOL.length / 2);
-  document.getElementById("btn-srs-bsk-first").addEventListener("click", function () {
-    startSrs(BSK_POOL.slice(0, BSK_HALF), "Benzersiz Son Kelime · İlk Yarı (" + BSK_HALF + ")");
-  });
-  document.getElementById("btn-srs-bsk-second").addEventListener("click", function () {
-    startSrs(BSK_POOL.slice(BSK_HALF), "Benzersiz Son Kelime · İkinci Yarı (" + (BSK_POOL.length - BSK_HALF) + ")");
-  });
-  document.getElementById("btn-srs-bs2-first").addEventListener("click", function () {
-    startSrs(BS2_POOL.slice(0, BS2_HALF), "Benzersiz Son 2 Kelime · İlk Yarı (" + BS2_HALF + ")");
-  });
-  document.getElementById("btn-srs-bs2-second").addEventListener("click", function () {
-    startSrs(BS2_POOL.slice(BS2_HALF), "Benzersiz Son 2 Kelime · İkinci Yarı (" + (BS2_POOL.length - BS2_HALF) + ")");
-  });
-  // Özel yanlış listesi — sadece belirtilen soru id'leri
-  var SRS_CUSTOM_IDS = [];
-  document.getElementById("btn-srs-custom").addEventListener("click", function () {
-    var pool = SRS_SORTED.filter(function (q) { return SRS_CUSTOM_IDS.indexOf(q.id) !== -1; });
-    startSrs(pool, "Özel Liste (" + pool.length + " Yanlış Soru) · Sıralı · 10'ar", false,
-      { sequential: true, steps: SRS_STEPS_CUSTOM, batchSize: 10 });
-  });
-  // Sınav (exam) — kapsamdan rastgele 50 soru
-  document.getElementById("btn-srs-exam-all").addEventListener("click", function () {
-    startSrsExam(SRS_SORTED, 50, "Sınav · 50 Rastgele (Tümü)");
-  });
-  document.getElementById("btn-srs-exam-first").addEventListener("click", function () {
-    startSrsExam(SRS_SORTED.slice(0, SRS_HALF), 50, "Sınav · 50 Rastgele (İlk Yarı)");
-  });
-  document.getElementById("btn-srs-exam-second").addEventListener("click", function () {
-    startSrsExam(SRS_SORTED.slice(SRS_HALF), 50, "Sınav · 50 Rastgele (İkinci Yarı)");
-  });
   // Yarı Desteler alt-menü aç/kapa
   (function () {
     var sub = document.getElementById("srs-halves-submenu");
@@ -4489,84 +4443,8 @@ const QUESTIONS = [
   });
 
   // Bölüm 12
-  document.getElementById("btn-bolum12-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("bolum12-submenu");
-    var open = sub.style.display === "flex";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "Bölüm 12: Tüm Sorular + Yanlışlar ▼" : "Bölüm 12: Tüm Sorular + Yanlışlar ▲";
-  });
-  document.getElementById("btn-bz12-clear").addEventListener("click", function () {
-    if (confirm("Bölüm 12 doğru/yanlış kayıtlarını sıfırlamak istediğine emin misin?")) {
-      bz12State.correct = [];
-      bz12State.wrong = [];
-      saveBz12State();
-    }
-  });
   loadBz12State();
-
-  // Bölüm 12 · Yarı Desteler
-  document.getElementById("btn-bolum12h-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("bolum12h-submenu");
-    var open = sub.style.display === "flex";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "Bölüm 12 · Yarı Desteler ▼" : "Bölüm 12 · Yarı Desteler ▲";
-  });
-  document.getElementById("btn-bz12h1-clear").addEventListener("click", function () {
-    if (confirm("İlk Yarı (1–168) yanlış kayıtlarını sıfırlamak istediğine emin misin?")) {
-      bz12hState.wrong = bz12hState.wrong.filter(function (id) { return BZ12H_H1_IDS.indexOf(id) === -1; });
-      saveBz12hState();
-    }
-  });
-  document.getElementById("btn-bz12h2-clear").addEventListener("click", function () {
-    if (confirm("İkinci Yarı (169–336) yanlış kayıtlarını sıfırlamak istediğine emin misin?")) {
-      bz12hState.wrong = bz12hState.wrong.filter(function (id) { return BZ12H_H2_IDS.indexOf(id) === -1; });
-      saveBz12hState();
-    }
-  });
   loadBz12hState();
-
-  // Pratik Modlar ana toggle
-  document.getElementById("btn-pratik-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("pratik-submenu");
-    var open = sub.style.display !== "none" && sub.style.display !== "";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "📋 Pratik Modlar ▼" : "📋 Pratik Modlar ▲";
-  });
-  document.getElementById("pratik-submenu").style.display = "none";
-
-  // Bölüm 13 toggle
-  document.getElementById("btn-bolum13-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("bolum13-submenu");
-    var open = sub.style.display === "flex";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "Bölüm 13: Seçili Sorular ▼" : "Bölüm 13: Seçili Sorular ▲";
-  });
-
-  // Benzersiz Son 2 Kelime toggle
-  document.getElementById("btn-son2-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("son2-submenu");
-    var open = sub.style.display === "flex";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "Benzersiz Son 2 Kelime ▼" : "Benzersiz Son 2 Kelime ▲";
-  });
-
-  // Çoklu Cevaplı toggle
-  document.getElementById("btn-coklu-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("coklu-submenu");
-    var open = sub.style.display === "flex";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "Çoklu Cevaplı Sorular ▼" : "Çoklu Cevaplı Sorular ▲";
-  });
-
-  document.getElementById("btn-xaas-toggle").addEventListener("click", function () {
-    var sub = document.getElementById("xaas-submenu");
-    var open = sub.style.display === "flex";
-    sub.style.display = open ? "none" : "flex";
-    this.textContent = open ? "IaaS / PaaS / SaaS Soruları ▼" : "IaaS / PaaS / SaaS Soruları ▲";
-  });
-
-  // Bölüm 13: Hızlı Öğrenme
-  document.getElementById("btn-b13study").addEventListener("click", startB13Study);
   document.getElementById("btn-b13-list").addEventListener("click", function () {
     showB13View("list"); renderB13List();
   });
