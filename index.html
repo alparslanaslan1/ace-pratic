@@ -1196,132 +1196,13 @@ h1 {
         <span style="display:block;font-size:16px;margin-bottom:3px;">📖 Çalışma Modu</span>
         <span style="font-size:12px;font-weight:400;opacity:.85;">Tüm 334 soru · Soru analizi · Senaryo rehberi</span>
       </button>
-      <!-- Akıllı Öğrenme — Yarı Desteler -->
-      <div class="bolum7-block">
-        <button class="mode-btn bolum7-toggle" id="btn-srs-halves-toggle">🎓 Akıllı Öğrenme · Yarı Desteler ▼</button>
-        <div class="bolum7-submenu" id="srs-halves-submenu" style="flex-direction:column;">
-          <button class="mode-btn" id="btn-srs-first">📗 İlk Yarı (Soru 1–168)</button>
-          <button class="mode-btn" id="btn-srs-second">📘 İkinci Yarı (Soru 169–336)</button>
-          <div style="height:1px;background:#dbeafe;margin:4px 0;"></div>
-          <button class="mode-btn" id="btn-srs-exam-all">📝 Sınav: 50 Rastgele (Tümü)</button>
-          <button class="mode-btn" id="btn-srs-exam-first">📝 Sınav: 50 Rastgele (İlk Yarı)</button>
-          <button class="mode-btn" id="btn-srs-exam-second">📝 Sınav: 50 Rastgele (İkinci Yarı)</button>
-        </div>
-      </div>
-      <!-- Akıllı Öğrenme — Benzersiz Kelime Desteleri -->
-      <div class="bolum7-block">
-        <button class="mode-btn bolum7-toggle" id="btn-srs-benzersiz-toggle">🎓 Akıllı Öğrenme · Benzersiz Kelime ▼</button>
-        <div class="bolum7-submenu" id="srs-benzersiz-submenu" style="flex-direction:column;">
-          <div style="font-size:12px;font-weight:700;color:#5b21b6;padding:2px 2px;">🔑 Benzersiz Son Kelime</div>
-          <button class="mode-btn" id="btn-srs-bsk-first">📗 İlk Yarı</button>
-          <button class="mode-btn" id="btn-srs-bsk-second">📘 İkinci Yarı</button>
-          <div style="height:1px;background:#dbeafe;margin:4px 0;"></div>
-          <div style="font-size:12px;font-weight:700;color:#075985;padding:2px 2px;">🔑 Benzersiz Son 2 Kelime</div>
-          <button class="mode-btn" id="btn-srs-bs2-first">📗 İlk Yarı</button>
-          <button class="mode-btn" id="btn-srs-bs2-second">📘 İkinci Yarı</button>
-        </div>
-      </div>
-      <!-- Akıllı Öğrenme — Özel Yanlış Listesi -->
-      <button class="mode-btn" id="btn-srs-custom" style="text-align:left;">🎯 Akıllı Öğrenme · Özel Liste (Boş)</button>
-      <!-- Kategori Bölümü (karşılıklı dışlayıcı) -->
-      <div class="bolum7-block">
-        <button class="mode-btn bolum7-toggle" id="btn-kategori-toggle">🗂️ Kategoriler (Ayrık) ▼</button>
-        <div class="bolum7-submenu" id="kategori-submenu" style="flex-direction:column;">
-          <div style="font-size:11.5px;color:#6b7280;padding:2px 2px 6px;">Her soru yalnızca üstteki ilk uygun kategoride yer alır.</div>
-          <button class="mode-btn" data-mode="cat:multi">1. Çoklu Cevap <span class="badge" id="cat-multi-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:allnone">2. Tüm Şıklar Doğru/Yanlış <span class="badge" id="cat-allnone-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:xaas_cat">3. IaaS / PaaS / SaaS <span class="badge" id="cat-xaas-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:bson">4. Benzersiz Son <span class="badge" id="cat-bson-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:bson2">5. Benzersiz Son 2 <span class="badge" id="cat-bson2-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:bilk">6. Benzersiz İlk <span class="badge" id="cat-bilk-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:diger">7. Diğerleri <span class="badge" id="cat-diger-count">–</span></button>
-        </div>
-      </div>
-      <!-- Pratik Modlar ana toggle -->
-      <div class="bolum7-block">
-        <button class="mode-btn bolum7-toggle" id="btn-pratik-toggle">📋 Pratik Modlar ▼</button>
-        <div class="bolum7-submenu" id="pratik-submenu" style="flex-direction:column;">
-
-          <button class="mode-btn" data-mode="exam">Exam Mode: Rastgele 50 Soru</button>
-          <button class="mode-btn" data-mode="bolum6">Bölüm 6: "All / None of the Above" Soruları</button>
-
-          <!-- Bölüm 13 -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-bolum13-toggle">Bölüm 13: Seçili Sorular ▼</button>
-            <div class="bolum7-submenu" id="bolum13-submenu">
-              <button class="mode-btn" data-mode="bolum13">Karışık <span class="badge" id="bolum13-count">117</span></button>
-              <button class="mode-btn" data-mode="bolum13_sirali">Sıralı <span class="badge">117</span></button>
-              <button class="mode-btn" id="btn-b13study">🧠 Hızlı Öğrenme (Ezber)</button>
-            </div>
-          </div>
-
-          <!-- Çoklu Cevaplı Sorular -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-coklu-toggle">Çoklu Cevaplı Sorular ▼</button>
-            <div class="bolum7-submenu" id="coklu-submenu">
-              <button class="mode-btn" data-mode="coklu">Karışık <span class="badge" id="coklu-count">7</span></button>
-              <button class="mode-btn" data-mode="coklu_sirali">Sıralı <span class="badge">7</span></button>
-            </div>
-          </div>
-
-          <!-- IaaS / PaaS / SaaS Cevaplı Sorular -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-xaas-toggle">IaaS / PaaS / SaaS Soruları ▼</button>
-            <div class="bolum7-submenu" id="xaas-submenu">
-              <button class="mode-btn" data-mode="xaas">Karışık <span class="badge" id="xaas-count">0</span></button>
-              <button class="mode-btn" data-mode="xaas_sirali">Sıralı <span class="badge">0</span></button>
-            </div>
-          </div>
-
-          <!-- Benzersiz Son Kelime -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-bson-toggle">Benzersiz Son Kelime ▼</button>
-            <div class="bolum7-submenu" id="bson-submenu">
-              <button class="mode-btn" data-mode="benzersiz">Karışık <span class="badge">80</span></button>
-              <button class="mode-btn" data-mode="benzersiz_sirali">Sıralı <span class="badge">80</span></button>
-            </div>
-          </div>
-
-          <button class="mode-btn" data-mode="benzersizilk">Benzersiz İlk Kelime <span class="badge" id="benzersizilk-count">30</span></button>
-
-          <!-- Benzersiz Son 2 Kelime -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-son2-toggle">Benzersiz Son 2 Kelime ▼</button>
-            <div class="bolum7-submenu" id="son2-submenu">
-              <button class="mode-btn" data-mode="benzersizson2">Karışık <span class="badge" id="son2-count">85</span></button>
-              <button class="mode-btn" data-mode="benzersizson2_sirali">Sıralı <span class="badge">85</span></button>
-            </div>
-          </div>
-
-          <!-- Bölüm 12 -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-bolum12-toggle">Bölüm 12: Tüm Sorular + Yanlışlar ▼</button>
-            <div class="bolum7-submenu" id="bolum12-submenu">
-              <button class="mode-btn" data-mode="bolum12_all">Tüm Sorular (Karışık)</button>
-              <button class="mode-btn" data-mode="bolum12_wrong" id="btn-bz12-wrong">✗ Yanlışlar <span class="badge" id="bz12-wrong-count">0</span></button>
-              <button class="mode-btn danger" id="btn-bz12-clear">Sıfırla</button>
-              <div id="bz12-wrong-nums" class="bz12-wrong-nums"></div>
-            </div>
-          </div>
-
-          <!-- Bölüm 12 · Yarı Desteler -->
-          <div class="bolum7-block">
-            <button class="mode-btn bolum7-toggle" id="btn-bolum12h-toggle">Bölüm 12 · Yarı Desteler ▼</button>
-            <div class="bolum7-submenu" id="bolum12h-submenu">
-              <div style="font-size:12px;font-weight:700;color:#166534;padding:2px 2px;">📗 İlk Yarı (1–168)</div>
-              <button class="mode-btn" data-mode="bolum12h1_all">Tüm Sorular (Karışık)</button>
-              <button class="mode-btn" data-mode="bolum12h1_wrong">✗ Yanlışlar <span class="badge" id="bz12h1-wrong-count">0</span></button>
-              <button class="mode-btn danger" id="btn-bz12h1-clear">Sıfırla (İlk Yarı)</button>
-              <div id="bz12h1-wrong-nums" class="bz12-wrong-nums"></div>
-              <div style="height:1px;background:#dbeafe;margin:6px 0;"></div>
-              <div style="font-size:12px;font-weight:700;color:#075985;padding:2px 2px;">📘 İkinci Yarı (169–336)</div>
-              <button class="mode-btn" data-mode="bolum12h2_all">Tüm Sorular (Karışık)</button>
-              <button class="mode-btn" data-mode="bolum12h2_wrong">✗ Yanlışlar <span class="badge" id="bz12h2-wrong-count">0</span></button>
-              <button class="mode-btn danger" id="btn-bz12h2-clear">Sıfırla (İkinci Yarı)</button>
-              <div id="bz12h2-wrong-nums" class="bz12-wrong-nums"></div>
-            </div>
-          </div>
-
+      <!-- Benzersiz Son Kelime -->
+      <div class="menu-section">
+        <p class="menu-section-title">🔑 Benzersiz Son Kelime</p>
+        <p class="menu-section-hint">Doğru şıktaki son kelime, diğer soruların hiçbir şıkkında geçmeyen sorular · <strong>80 soru</strong></p>
+        <div class="menu-buttons menu-buttons-row">
+          <button class="mode-btn" data-mode="benzersiz">Karışık</button>
+          <button class="mode-btn" data-mode="benzersiz_sirali">Sıralı</button>
         </div>
       </div>
     </div>
