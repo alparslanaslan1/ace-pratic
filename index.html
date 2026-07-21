@@ -1204,6 +1204,9 @@ h1 {
           <button class="mode-btn" data-mode="benzersiz">Karışık</button>
           <button class="mode-btn" data-mode="benzersiz_sirali">Sıralı</button>
         </div>
+        <div class="menu-buttons" style="margin-top:12px;">
+          <button class="mode-btn" id="btn-bz-srs" style="border-color:#7c3aed;color:#7c3aed;">🎓 Akıllı Öğrenme (20dk · 1s · 3s → öğrenildi)</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2149,7 +2152,7 @@ const QUESTIONS = [
   var SRS_STEPS = [45*60e3, 90*60e3, 3*3600e3, 6*3600e3];
   var SRS_STEPS_CUSTOM = [5*60e3, 20*60e3, 45*60e3]; // Özel Liste destesi için farklı aralıklar
   function activeSrsSteps() { return srs.stepsOverride || SRS_STEPS; }
-  var srs = { cards: {}, db: null, ready: false, queue: [], qIdx: 0, answeredThis: false, isExam: false, sequential: false, stepsOverride: null, batchSize: null, batchRemaining: 0 };
+  var srs = { cards: {}, db: null, ready: false, queue: [], qIdx: 0, answeredThis: false, isExam: false, sequential: false, stepsOverride: null, batchSize: null, batchRemaining: 0, wrongMs: null };
   // Aktif soru havuzu — Akıllı Öğrenme tüm sorular üzerinde çalışır;
   // "Yarı" destelerinde bu, sorların bir alt kümesine ayarlanır.
   var srsPool = QUESTIONS;
@@ -2236,11 +2239,19 @@ const QUESTIONS = [
         return;
       }
       c.step = c.step + 1;
+      c.due = now + steps[Math.max(c.step, 0)];
     } else {
       c.wrong++; c.lapses++;
-      c.step = 0; // yanlış → baştan (ilk aralık)
+      if (srs.wrongMs) {
+        // Bu deste için özel "yeniden öğren" aralığı: yanlış → sabit süre sonra,
+        // merdiven tam baştan (sonraki doğruda ilk aralıktan başlar).
+        c.step = -1;
+        c.due = now + srs.wrongMs;
+      } else {
+        c.step = 0; // yanlış → baştan (ilk aralık)
+        c.due = now + steps[Math.max(c.step, 0)];
+      }
     }
-    c.due = now + steps[Math.max(c.step, 0)];
     srsSaveCard(c);
     srsUpdateHero();
   }
@@ -2298,6 +2309,7 @@ const QUESTIONS = [
     srs.sequential = !!opts.sequential;
     srs.stepsOverride = opts.steps || null;
     srs.batchSize = opts.batchSize || null;
+    srs.wrongMs = opts.wrongMs || null;
     var titleEl = document.getElementById("srs-title");
     if (titleEl) titleEl.textContent = "🎓 Akıllı Öğrenme" + (srsPoolLabel ? " · " + srsPoolLabel : "");
     showScreen(screenSrs);
@@ -2369,10 +2381,10 @@ const QUESTIONS = [
       fresh.sort(function (a, b) { return a.id - b.id; });
       srs.queue = due.concat(fresh);
     } else {
-      // Önce vadesi gelenler (en çok yanlış yapılan önce), sonra TÜM yeni sorular (limit yok).
-      // Vadesi gelmeyen (gelecekteki) sorular kuyruğa alınmaz — sayfa yenilense de çıkmaz.
+      // Önce vadesi gelenler — en erken vadesi gelen (en uzun bekleyen) önce çıkar,
+      // sonra TÜM yeni sorular. Vadesi gelmeyen (gelecekteki) sorular kuyruğa alınmaz.
       due.sort(function (a, b) {
-        return (srs.cards[b.id].lapses - srs.cards[a.id].lapses);
+        return (srs.cards[a.id].due - srs.cards[b.id].due);
       });
       srs.queue = due.concat(shuffleArray(fresh));
     }
@@ -2488,9 +2500,12 @@ const QUESTIONS = [
     var ansText = q.correct.map(function (l) { return q.options[l]; }).join(" + ");
     var tip = q.learnEn || q.learn || "";
     var c = srs.cards[q.id];
-    var nextIn = fmtDelta(activeSrsSteps()[Math.max(c.step, 0)]);
+    var nextIn = fmtDelta(Math.max(c.due - Date.now(), 0));
+    var headline = ok
+      ? (c.mastered ? "✅ Doğru — 🏆 Öğrenildi! Bir daha çıkmayacak" : "✅ Doğru — tekrar: " + nextIn + " sonra")
+      : "❌ Yanlış — bilmen gereken (tekrar: " + nextIn + " sonra)";
     lb.innerHTML =
-      "<div class='srs-know'><strong>" + (ok ? "✅ Doğru — tekrar: " + nextIn + " sonra" : "❌ Yanlış — bilmen gereken (tekrar: " + nextIn + " sonra)") + "</strong>" +
+      "<div class='srs-know'><strong>" + headline + "</strong>" +
       "<span class='ka'>" + ansText + "</span>" +
       (tip ? "<span class='kt'>💡 " + tip + "</span>" : "") + "</div>";
     document.getElementById("btn-srs-next").style.display = "inline-block";
@@ -4017,29 +4032,62 @@ const QUESTIONS = [
     return rules;
   }
 
+  // Kısa ama güvenli eşleşen ürün kısaltmaları (alt-string araması için)
+  var CHEAT_ACRONYMS = ["gke","iap","cdn","vpn","scc","dlp","sso","dms","gcs","waf","vpc"];
+
+  // Bir kuralın cevabından (r.ans) aranabilir ürün adlarını çıkar.
+  // Örn: "Google Kubernetes Engine (GKE)" -> ["google kubernetes engine","gke"]
+  function cheatRuleProductPhrases(r) {
+    var phrases = [];
+    var ans = r.ans || "";
+    var paren = ans.match(/\(([^)]+)\)/);
+    var base = ans.replace(/\([^)]*\)/g, "").trim();
+    base.split("/").forEach(function(p) {
+      p = p.trim().toLowerCase();
+      if (!p) return;
+      if (p.length >= 5 || CHEAT_ACRONYMS.indexOf(p) !== -1) phrases.push(p);
+    });
+    if (paren) {
+      var pv = paren[1].trim().toLowerCase();
+      if ((pv.length >= 5 || CHEAT_ACRONYMS.indexOf(pv) !== -1)
+        && pv.indexOf("as a service") === -1
+        && pv !== "automatic" && pv !== "global") {
+        phrases.push(pv);
+      }
+    }
+    return phrases;
+  }
+
+  // İpucu artık DOĞRU CEVABA sabitlenir: bir kural yalnızca ürün adı doğru
+  // cevap metninde geçtiğinde tetiklenir. Cevabın SORUDA olmayan (yeni
+  // önerdiği) ürüne büyük öncelik verilir — böylece bağlam ürünleri (soruda
+  // zaten geçen Cloud Storage gibi) yerine asıl seçilen ürün gösterilir.
   function cheatFindRulesForQuestion(q) {
     var signals = cheatDetectSignals(q.text);
-    var rules = [];
-    // Direct answer matching
-    var correctAns = q.correct.map(function(l){ return (q.options[l]||"").toLowerCase(); }).join(" ");
+    var qtext = q.text.toLowerCase();
+    var correctAns = q.correct.map(function(l){ return (q.options[l]||""); }).join("  ").toLowerCase();
+    var scored = [];
     CHEAT_SIGNAL_MAP.forEach(function(r) {
-      var ansWords = r.ans.toLowerCase().replace(/[()]/g,"").split(/\W+/).filter(function(w){ return w.length > 3; });
-      var sigWords = r.sig.toLowerCase().split(/\W+/).filter(function(w){ return w.length > 4; });
-      var sigMatch = sigWords.some(function(w){ return q.text.toLowerCase().indexOf(w) !== -1; });
-      var ansMatch = ansWords.some(function(w){ return correctAns.indexOf(w) !== -1; });
-      if ((sigMatch && ansMatch) || (ansMatch && ansWords.length >= 2)) {
-        if (rules.indexOf(r) === -1) rules.push(r);
+      var phrases = cheatRuleProductPhrases(r);
+      var matchedPhrase = null;
+      for (var i = 0; i < phrases.length; i++) {
+        if (correctAns.indexOf(phrases[i]) !== -1) { matchedPhrase = phrases[i]; break; }
       }
+      if (!matchedPhrase) return; // ürün doğru cevapta yok → kuralı atla
+      var novel = qtext.indexOf(matchedPhrase) === -1; // cevabın getirdiği yeni ürün mü?
+      var sigWords = r.sig.toLowerCase().split(/\W+/).filter(function(w){ return w.length > 4; });
+      var sigHit = sigWords.some(function(w){ return qtext.indexOf(w) !== -1; });
+      var score = (novel ? 1000 : 0) + (sigHit ? 10 : 0) + matchedPhrase.length;
+      scored.push({ rule: r, score: score });
     });
-    if (rules.length === 0) {
-      // fallback: just signal match
-      signals.forEach(function(s) {
-        CHEAT_SIGNAL_MAP.forEach(function(r) {
-          var ansLc = r.ans.toLowerCase().replace(/[^a-z0-9 ]/g,"");
-          if (ansLc.indexOf(s.replace(/_/g," ")) !== -1 && rules.indexOf(r) === -1) rules.push(r);
-        });
-      });
-    }
+    scored.sort(function(a, b){ return b.score - a.score; });
+    var rules = [];
+    var seenAns = {};
+    scored.forEach(function(s) {
+      if (seenAns[s.rule.ans]) return;
+      seenAns[s.rule.ans] = true;
+      rules.push(s.rule);
+    });
     return { signals: signals, rules: rules.slice(0,4) };
   }
 
@@ -4356,6 +4404,22 @@ const QUESTIONS = [
   document.getElementById("btn-srs").addEventListener("click", function () {
     startSrs(QUESTIONS, "");
   });
+  // Benzersiz Son Kelime · Akıllı Öğrenme
+  // Doğru: 20dk → 1s → 3s → öğrenildi (bir daha çıkmaz) · Yanlış: 10dk sonra
+  // 15'erli turlar; tur bitince "▶ Çalış" ile başa sarılır, vadesi gelenler önce gelir.
+  var BENZERSIZ_SRS_POOL = QUESTIONS.filter(function (q) {
+    return q.groups.indexOf("benzersiz") !== -1 && q.correct.length === 1;
+  });
+  var btnBzSrs = document.getElementById("btn-bz-srs");
+  if (btnBzSrs) {
+    btnBzSrs.addEventListener("click", function () {
+      startSrs(BENZERSIZ_SRS_POOL, "🔑 Benzersiz Son Kelime", false, {
+        steps: [20 * 60e3, 60 * 60e3, 3 * 3600e3],
+        wrongMs: 10 * 60e3,
+        batchSize: 15
+      });
+    });
+  }
   // Yarı Desteler alt-menü aç/kapa
   (function () {
     var sub = document.getElementById("srs-halves-submenu");
