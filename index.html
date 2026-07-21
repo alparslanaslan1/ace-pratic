@@ -1200,9 +1200,15 @@ h1 {
       <div class="menu-section">
         <p class="menu-section-title">🔑 Benzersiz Son Kelime</p>
         <p class="menu-section-hint">Doğru şıktaki son kelime, diğer soruların hiçbir şıkkında geçmeyen sorular · <strong>80 soru</strong></p>
+        <p class="menu-subgroup-title">📗 İlk Yarı (İlk 40 soru)</p>
         <div class="menu-buttons menu-buttons-row">
-          <button class="mode-btn" data-mode="benzersiz">Karışık</button>
-          <button class="mode-btn" data-mode="benzersiz_sirali">Sıralı</button>
+          <button class="mode-btn" data-mode="benzersiz_h1">Karışık</button>
+          <button class="mode-btn" data-mode="benzersiz_h1_sirali">Sıralı</button>
+        </div>
+        <p class="menu-subgroup-title">📘 İkinci Yarı (Son 40 soru)</p>
+        <div class="menu-buttons menu-buttons-row">
+          <button class="mode-btn" data-mode="benzersiz_h2">Karışık</button>
+          <button class="mode-btn" data-mode="benzersiz_h2_sirali">Sıralı</button>
         </div>
         <div class="menu-buttons" style="margin-top:12px;">
           <button class="mode-btn" id="btn-bz-srs" style="border-color:#7c3aed;color:#7c3aed;">🎓 Akıllı Öğrenme (20dk · 1s · 3s → öğrenildi)</button>
@@ -3019,6 +3025,14 @@ const QUESTIONS = [
       pool = QUESTIONS.filter(function (q) {
         return q.groups.indexOf("benzersiz") !== -1 && q.correct.length === 1 && bzState.wrong.indexOf(q.id) !== -1;
       });
+    } else if (mode.indexOf("benzersiz_h") === 0) {
+      // Benzersiz son kelime — yarı desteler (id sırasına göre ilk 40 / son 40)
+      var bzAll = QUESTIONS.filter(function (q) {
+        return q.groups.indexOf("benzersiz") !== -1 && q.correct.length === 1;
+      }).sort(function (a, b) { return a.id - b.id; });
+      var bzHalf = Math.ceil(bzAll.length / 2);
+      var slice = (mode.indexOf("_h1") !== -1) ? bzAll.slice(0, bzHalf) : bzAll.slice(bzHalf);
+      pool = (mode.indexOf("_sirali") !== -1) ? slice : shuffleArray(slice);
     } else if (mode === "bolum4") {
       pool = QUESTIONS.slice(); // sıralı, karıştırılmaz
     } else if (mode === "bolum5") {
