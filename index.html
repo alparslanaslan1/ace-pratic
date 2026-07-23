@@ -1224,7 +1224,14 @@ h1 {
           <button class="mode-btn" data-mode="cat:allnone:sirali">2. Tüm Şıklar Doğru/Yanlış <span class="badge" id="cat-allnone-count">–</span></button>
           <button class="mode-btn" data-mode="cat:bson:sirali">3. Benzersiz Son <span class="badge" id="cat-bson-count">–</span></button>
           <button class="mode-btn" data-mode="cat:bson2:sirali">4. Benzersiz Son 2 <span class="badge" id="cat-bson2-count">–</span></button>
-          <button class="mode-btn" data-mode="cat:bilk:sirali">5. Benzersiz İlk <span class="badge" id="cat-bilk-count">–</span></button>
+          <div class="bolum7-block">
+            <button class="mode-btn bolum7-toggle" id="btn-bilk-toggle">5. Benzersiz İlk <span class="badge" id="cat-bilk-count">–</span> ▼</button>
+            <div class="bolum7-submenu" id="bilk-submenu">
+              <button class="mode-btn" data-mode="cat:bilk">Karışık</button>
+              <button class="mode-btn" data-mode="cat:bilk:sirali">Sıralı</button>
+              <button class="mode-btn" id="btn-bilk-srs" style="border-color:#7c3aed;color:#7c3aed;">🎓 Akıllı Öğrenme (20dk · 1s · 3s → öğrenildi)</button>
+            </div>
+          </div>
           <button class="mode-btn" data-mode="cat:diger:sirali">6. Diğerleri <span class="badge" id="cat-diger-count">–</span></button>
         </div>
       </div>
@@ -4472,6 +4479,28 @@ const QUESTIONS = [
       });
     });
   }
+  // Benzersiz İlk (kategori) alt-menü aç/kapa + Akıllı Öğrenme
+  (function () {
+    var sub = document.getElementById("bilk-submenu");
+    var tog = document.getElementById("btn-bilk-toggle");
+    if (sub && tog) {
+      tog.addEventListener("click", function () {
+        var open = sub.style.display === "flex";
+        sub.style.display = open ? "none" : "flex";
+        tog.innerHTML = tog.innerHTML.replace(open ? "▲" : "▼", open ? "▼" : "▲");
+      });
+    }
+    var btnBilkSrs = document.getElementById("btn-bilk-srs");
+    if (btnBilkSrs) {
+      btnBilkSrs.addEventListener("click", function () {
+        startSrs(catPool("bilk"), "🔑 Benzersiz İlk Kelime", false, {
+          steps: [20 * 60e3, 60 * 60e3, 3 * 3600e3],
+          wrongMs: 10 * 60e3,
+          batchSize: 15
+        });
+      });
+    }
+  })();
   // Yarı Desteler alt-menü aç/kapa
   (function () {
     var sub = document.getElementById("srs-halves-submenu");
