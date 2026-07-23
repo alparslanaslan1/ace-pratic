@@ -1214,6 +1214,20 @@ h1 {
           <button class="mode-btn" id="btn-bz-srs" style="border-color:#7c3aed;color:#7c3aed;">🎓 Akıllı Öğrenme (20dk · 1s · 3s → öğrenildi)</button>
         </div>
       </div>
+      <!-- Kategoriler (Ayrık) -->
+      <div class="menu-section">
+        <p class="menu-section-title">🗂️ Kategoriler (Ayrık)</p>
+        <p class="menu-section-hint">Her soru yalnızca üstteki ilk uygun kategoride yer alır. Alttaki düğme tüm soruları bu kategori sırasıyla oynatır.</p>
+        <div class="menu-buttons">
+          <button class="mode-btn" data-mode="cat_all" style="border-color:#0f766e;color:#0f766e;font-weight:700;">▶ Sırayla Tümü <span class="badge" id="cat-all-count">–</span></button>
+          <button class="mode-btn" data-mode="cat:multi:sirali">1. Çoklu Cevap <span class="badge" id="cat-multi-count">–</span></button>
+          <button class="mode-btn" data-mode="cat:allnone:sirali">2. Tüm Şıklar Doğru/Yanlış <span class="badge" id="cat-allnone-count">–</span></button>
+          <button class="mode-btn" data-mode="cat:bson:sirali">3. Benzersiz Son <span class="badge" id="cat-bson-count">–</span></button>
+          <button class="mode-btn" data-mode="cat:bson2:sirali">4. Benzersiz Son 2 <span class="badge" id="cat-bson2-count">–</span></button>
+          <button class="mode-btn" data-mode="cat:bilk:sirali">5. Benzersiz İlk <span class="badge" id="cat-bilk-count">–</span></button>
+          <button class="mode-btn" data-mode="cat:diger:sirali">6. Diğerleri <span class="badge" id="cat-diger-count">–</span></button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2901,14 +2915,12 @@ const QUESTIONS = [
   }
 
   // Karşılıklı dışlayıcı kategori — her soru öncelik sırasına göre TEK kategoriye düşer.
-  // 1) çoklu cevap 2) all/none of the above 3) IaaS/PaaS/SaaS
-  // 4) benzersiz son 5) benzersiz son 2 6) benzersiz ilk 7) diğerleri
+  // 1) çoklu cevap 2) all/none of the above 3) benzersiz son
+  // 4) benzersiz son 2 5) benzersiz ilk 6) diğerleri
   var CAT_ALLNONE_RE = /\b(all of the above|none of the above|all of these|all of the above are correct|both a.{0,5}b)\b/i;
-  var CAT_XAAS_RE = /infrastructure as a service|platform as a service|software as a service|\biaas\b|\bpaas\b|\bsaas\b/;
   function getExclusiveCategory(q) {
     if (q.correct.length > 1) return "multi";
     if (Object.values(q.options).some(function (t) { return CAT_ALLNONE_RE.test(t || ""); })) return "allnone";
-    if (q.correct.some(function (l) { return CAT_XAAS_RE.test((q.options[l] || "").toLowerCase()); })) return "xaas_cat";
     var g = q.groups || [];
     if (g.indexOf("benzersiz") !== -1) return "bson";
     if (g.indexOf("benzersizson2") !== -1) return "bson2";
@@ -2918,10 +2930,24 @@ const QUESTIONS = [
   function catPool(catId) {
     return QUESTIONS.filter(function (q) { return getExclusiveCategory(q) === catId; });
   }
+  // Kategori öncelik sırası — "Sırayla Tümü" bu düzende oynatır.
+  var CAT_ORDER = ["multi", "allnone", "bson", "bson2", "bilk", "diger"];
+  function catAllOrdered() {
+    var out = [];
+    CAT_ORDER.forEach(function (cid) {
+      var list = catPool(cid).slice().sort(function (a, b) { return a.id - b.id; });
+      out = out.concat(list);
+    });
+    return out;
+  }
 
   function getQuestionsForMode(mode) {
     var pool;
     var allAbovePattern = /\b(all of the above|none of the above|all of these|all of the above are correct|both a.{0,5}b)\b/i;
+    // Tüm sorular, kategori öncelik sırasıyla (çoklu → all/none → bson → bson2 → bilk → diğer)
+    if (mode === "cat_all") {
+      return catAllOrdered();
+    }
     // Karşılıklı dışlayıcı kategori modları: cat:<id> (karışık) / cat:<id>:sirali
     if (mode.indexOf("cat:") === 0) {
       var parts = mode.split(":");
@@ -4410,6 +4436,18 @@ const QUESTIONS = [
       startQuiz(btn.dataset.mode);
     });
   });
+
+  // Kategori rozetleri (ayrık, öncelik sırasına göre adetler)
+  (function () {
+    var map = { multi: "cat-multi-count", allnone: "cat-allnone-count", bson: "cat-bson-count",
+      bson2: "cat-bson2-count", bilk: "cat-bilk-count", diger: "cat-diger-count" };
+    var tally = { multi: 0, allnone: 0, bson: 0, bson2: 0, bilk: 0, diger: 0 };
+    QUESTIONS.forEach(function (q) { var c = getExclusiveCategory(q); if (tally[c] !== undefined) tally[c]++; });
+    Object.keys(map).forEach(function (k) {
+      var el = document.getElementById(map[k]); if (el) el.textContent = tally[k];
+    });
+    var allEl = document.getElementById("cat-all-count"); if (allEl) allEl.textContent = QUESTIONS.length;
+  })();
 
   loadB7State();
   loadBzState();
