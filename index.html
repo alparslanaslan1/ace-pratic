@@ -1168,6 +1168,54 @@ h1 {
   font-size: 12px; font-weight: 600;
   border: 1px solid transparent;
 }
+
+/* ───────── KELİME ALIŞTIRMASI ───────── */
+.wd-instr { color:#6b7280; font-size:13px; margin:4px 0 18px; }
+.wd-word {
+  text-align:center;
+  font-size:40px;
+  font-weight:800;
+  color:#0f172a;
+  background:linear-gradient(135deg,#f0fdfa 0%,#ccfbf1 100%);
+  border:2px solid #5eead4;
+  border-radius:14px;
+  padding:34px 20px;
+  margin-bottom:22px;
+  word-break:break-word;
+  line-height:1.2;
+}
+.wd-choices {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:16px;
+}
+.wd-choice {
+  padding:18px 14px;
+  font-size:15px;
+  font-weight:700;
+  border:2px solid #d1d5db;
+  background:#fafafa;
+  color:#1f2937;
+  border-radius:10px;
+  cursor:pointer;
+  transition:background .15s, border-color .15s, color .15s;
+}
+.wd-choice:hover:not(:disabled) { border-color:#0f766e; background:#f0fdfa; }
+.wd-choice:disabled { cursor:default; opacity:.9; }
+.wd-choice.right { background:#2e7d32; border-color:#2e7d32; color:#fff; }
+.wd-choice.wrong { background:#c62828; border-color:#c62828; color:#fff; }
+.wd-choice .wd-kbd {
+  display:inline-block; min-width:18px; margin-right:6px;
+  font-size:12px; opacity:.6; font-weight:700;
+}
+.wd-feedback {
+  min-height:26px; text-align:center; font-size:15px; font-weight:600;
+  margin-bottom:10px;
+}
+.wd-feedback.ok { color:#15803d; }
+.wd-feedback.no { color:#b91c1c; }
+@media (max-width:520px){ .wd-choices{ grid-template-columns:1fr; } .wd-word{ font-size:30px; } }
 </style>
 </head>
 <body>
@@ -1233,6 +1281,15 @@ h1 {
             </div>
           </div>
           <button class="mode-btn" data-mode="cat:diger:sirali">6. Diğerleri <span class="badge" id="cat-diger-count">–</span></button>
+        </div>
+      </div>
+      <!-- Kelime Alıştırması -->
+      <div class="menu-section">
+        <p class="menu-section-title">🎯 Kelime Alıştırması</p>
+        <p class="menu-section-hint">Rastgele bir kelime çıkar; hangi alana ait olduğunu tahmin et. Çeldiriciler (yanlış şık kelimeleri) de karışır. Hızlı tanıma pratiği.</p>
+        <div class="menu-buttons">
+          <button class="mode-btn" id="btn-worddrill-4" style="border-color:#0f766e;color:#0f766e;font-weight:700;">▶ Hangi Alan? — 4 Seçenek (Son · Son 2 · İlk · Çeldirici)</button>
+          <button class="mode-btn" id="btn-worddrill-2" style="border-color:#0f766e;color:#0f766e;">⚡ Hızlı: Benzersiz mi, Çeldirici mi? (2 Seçenek)</button>
         </div>
       </div>
     </div>
@@ -1520,6 +1577,22 @@ h1 {
     <div id="srs-weak-view" style="display:none;">
       <p class="bzgame-desc">En çok yanlış yaptığın sorular ve bilmen gerekenler. Bunlar aynı zamanda aralıklı tekrarda daha sık karşına çıkar.</p>
       <div id="srs-weak-list"></div>
+    </div>
+  </div>
+
+  <!-- KELİME ALIŞTIRMASI (Hangi Alan?) -->
+  <div id="screen-worddrill" class="screen" style="display:none;">
+    <div class="quiz-header">
+      <div class="mode-label" id="wd-mode-label">🎯 Kelime Alıştırması</div>
+      <div id="wd-score" class="progress-text"></div>
+    </div>
+    <p class="wd-instr" id="wd-instr"></p>
+    <div id="wd-word" class="wd-word"></div>
+    <div id="wd-choices" class="wd-choices"></div>
+    <div id="wd-feedback" class="wd-feedback"></div>
+    <div class="quiz-footer">
+      <button id="wd-menu" class="action-btn secondary">← Menüye Dön</button>
+      <button id="wd-next" class="action-btn" style="display:none;">Sonraki →</button>
     </div>
   </div>
 
@@ -2101,8 +2174,10 @@ const QUESTIONS = [
     if (screenB13Study) screenB13Study.style.display = "none";
     if (screenSrs) screenSrs.style.display = "none";
     if (screenStudy) screenStudy.style.display = "none";
+    if (screenWordDrill) screenWordDrill.style.display = "none";
     screen.style.display = "block";
   }
+  var screenWordDrill = document.getElementById("screen-worddrill");
 
   // Bölüm 11: kendi seçtiğim kelimelerle bulma oyunu
   function loadBz11Sel() {
@@ -4501,6 +4576,163 @@ const QUESTIONS = [
       });
     }
   })();
+
+  // ==================== KELİME ALIŞTIRMASI ====================
+  // Rastgele bir kelime/ifade göster; kullanıcı hangi alana ait olduğunu seçsin.
+  //  son1 = benzersiz son kelime · son2 = benzersiz son 2 kelime · ilk = benzersiz ilk kelime
+  //  yanlis = çeldirici (yanlış şıkların son kelimeleri)
+  var WD_CAT_LABELS = { son1: "Benzersiz Son", son2: "Benzersiz Son 2", ilk: "Benzersiz İlk", yanlis: "Çeldirici (Hiçbiri)" };
+  function wdNorm(w) { return (w || "").toLowerCase().replace(/[^a-z0-9]/gi, ""); }
+  function wdDisplay(w) {
+    if (!w || w.length < 4 || w.length > 18) return false;
+    if (/^\d+$/.test(w)) return false;
+    if (/\d{5,}/.test(w)) return false;
+    if (!/[a-z]{2}/i.test(w)) return false;
+    return true;
+  }
+  function wdFirstWord(txt) {
+    var ws = String(txt).trim().split(/\s+/);
+    for (var i = 0; i < ws.length; i++) { var w = wdNorm(ws[i]); if (w.length >= 2 && !/^\d+$/.test(w)) return w; }
+    return wdNorm(ws[0]);
+  }
+  function wdLast2(txt) {
+    var ws = String(txt).trim().split(/\s+/);
+    var n = ws.length;
+    var slice = (n < 2) ? ws : ws.slice(n - 2);
+    return slice.join(" ").toLowerCase().replace(/[^a-z0-9 ]/gi, "").replace(/\s+/g, " ").trim();
+  }
+  var wdPool = null;
+  function wdBuildPool() {
+    if (wdPool) return wdPool;
+    var items = [];
+    // son1 — hazır temiz liste
+    BENZERSIZ_WORDS.forEach(function (w) { items.push({ text: w, cat: "son1" }); });
+    // son2 + ilk — sorulardan hesapla
+    QUESTIONS.forEach(function (q) {
+      if (q.correct.length !== 1) return;
+      var g = q.groups || [];
+      var ca = q.options[q.correct[0]] || "";
+      if (g.indexOf("benzersizson2") !== -1) {
+        var p = wdLast2(ca);
+        if (p && p.split(" ").length >= 2) items.push({ text: p, cat: "son2" });
+      } else if (g.indexOf("benzersizilk") !== -1) {
+        var fw = wdFirstWord(ca);
+        if (wdDisplay(fw)) items.push({ text: fw, cat: "ilk" });
+      }
+    });
+    // yanlis — çeldiriciler
+    BENZERSIZ_DISTRACT.forEach(function (w) { if (wdDisplay(w)) items.push({ text: w, cat: "yanlis" }); });
+    // Çakışan metinleri (birden fazla kategoride görünen) ele — adil olsun
+    var byText = {};
+    items.forEach(function (it) { (byText[it.text] = byText[it.text] || {})[it.cat] = 1; });
+    var seen = {}, out = [];
+    items.forEach(function (it) {
+      if (Object.keys(byText[it.text]).length !== 1) return; // birden çok kategori → çıkar
+      if (seen[it.text]) return; // tekrarı çıkar
+      seen[it.text] = 1; out.push(it);
+    });
+    wdPool = out;
+    return wdPool;
+  }
+
+  var wd = { mode: 4, queue: [], idx: 0, right: 0, total: 0, answered: false };
+  function wdChoicesFor(mode) {
+    return mode === 2
+      ? [{ cat: "benzersiz", label: "🔑 Benzersiz Kelime" }, { cat: "yanlis", label: "❌ Çeldirici (Hiçbiri)" }]
+      : [{ cat: "son1", label: "🔑 Benzersiz Son" }, { cat: "son2", label: "🔑 Benzersiz Son 2" },
+         { cat: "ilk", label: "🔑 Benzersiz İlk" }, { cat: "yanlis", label: "❌ Çeldirici (Hiçbiri)" }];
+  }
+  // Dengeli kuyruk: anahtar kelimeler (son1/son2/ilk) ile çeldiriciler ~50/50 olsun,
+  // böylece öğrenmek istediğin gerçek kelimeler çeldiricilerin altında kaybolmaz.
+  function wdMakeQueue() {
+    var keys = wdPool.filter(function (it) { return it.cat !== "yanlis"; });
+    var dist = wdPool.filter(function (it) { return it.cat === "yanlis"; });
+    var distSample = shuffleArray(dist.slice()).slice(0, keys.length);
+    return shuffleArray(keys.concat(distSample));
+  }
+  function startWordDrill(mode) {
+    wd.mode = mode; wd.right = 0; wd.total = 0;
+    wdBuildPool();
+    wd.queue = wdMakeQueue();
+    wd.idx = 0;
+    document.getElementById("wd-mode-label").textContent = mode === 2
+      ? "⚡ Hızlı: Benzersiz mi, Çeldirici mi?" : "🎯 Hangi Alan?";
+    document.getElementById("wd-instr").textContent = mode === 2
+      ? "Kelime bir benzersiz anahtar mı, yoksa çeldirici mi? (1 = Benzersiz, 2 = Çeldirici)"
+      : "Kelime hangi alana ait? Klavye: 1 Son · 2 Son2 · 3 İlk · 4 Çeldirici.";
+    // seçenek düğmelerini kur
+    var box = document.getElementById("wd-choices");
+    box.innerHTML = "";
+    wdChoicesFor(mode).forEach(function (ch, i) {
+      var b = document.createElement("button");
+      b.className = "wd-choice";
+      b.dataset.cat = ch.cat;
+      b.innerHTML = "<span class='wd-kbd'>" + (i + 1) + "</span>" + ch.label;
+      b.addEventListener("click", function () { wdAnswer(ch.cat); });
+      box.appendChild(b);
+    });
+    showScreen(screenWordDrill);
+    wdRender();
+  }
+  function wdTrueCat(item) {
+    // 2 seçenekli modda son1/son2/ilk hepsi "benzersiz" sayılır
+    if (wd.mode === 2) return item.cat === "yanlis" ? "yanlis" : "benzersiz";
+    return item.cat;
+  }
+  function wdRender() {
+    if (wd.idx >= wd.queue.length) { wd.queue = wdMakeQueue(); wd.idx = 0; }
+    wd.answered = false;
+    var it = wd.queue[wd.idx];
+    document.getElementById("wd-word").textContent = it.text;
+    var fb = document.getElementById("wd-feedback"); fb.textContent = ""; fb.className = "wd-feedback";
+    document.getElementById("wd-next").style.display = "none";
+    Array.prototype.forEach.call(document.querySelectorAll(".wd-choice"), function (b) {
+      b.disabled = false; b.classList.remove("right", "wrong");
+    });
+    wdUpdateScore();
+  }
+  function wdUpdateScore() {
+    var pct = wd.total ? Math.round(100 * wd.right / wd.total) : 0;
+    document.getElementById("wd-score").textContent = "Doğru: " + wd.right + " / " + wd.total + " (%" + pct + ")";
+  }
+  function wdAnswer(cat) {
+    if (wd.answered) return;
+    wd.answered = true;
+    var it = wd.queue[wd.idx];
+    var trueCat = wdTrueCat(it);
+    var ok = cat === trueCat;
+    wd.total++; if (ok) wd.right++;
+    Array.prototype.forEach.call(document.querySelectorAll(".wd-choice"), function (b) {
+      b.disabled = true;
+      if (b.dataset.cat === trueCat) b.classList.add("right");
+      else if (b.dataset.cat === cat) b.classList.add("wrong");
+    });
+    var realLabel = WD_CAT_LABELS[it.cat] || it.cat;
+    var fb = document.getElementById("wd-feedback");
+    fb.textContent = (ok ? "✅ Doğru! " : "❌ Yanlış. ") + "“" + it.text + "” → " + realLabel;
+    fb.className = "wd-feedback " + (ok ? "ok" : "no");
+    document.getElementById("wd-next").style.display = "inline-block";
+    wdUpdateScore();
+  }
+  function wdNext() { if (!wd.answered) return; wd.idx++; wdRender(); }
+
+  var btnWd4 = document.getElementById("btn-worddrill-4");
+  if (btnWd4) btnWd4.addEventListener("click", function () { startWordDrill(4); });
+  var btnWd2 = document.getElementById("btn-worddrill-2");
+  if (btnWd2) btnWd2.addEventListener("click", function () { startWordDrill(2); });
+  document.getElementById("wd-next").addEventListener("click", wdNext);
+  document.getElementById("wd-menu").addEventListener("click", function () { showScreen(screenMenu); });
+  document.addEventListener("keydown", function (e) {
+    if (screenWordDrill.style.display !== "block") return;
+    if (!wd.answered) {
+      var n = parseInt(e.key, 10);
+      var choices = document.querySelectorAll(".wd-choice");
+      if (n >= 1 && n <= choices.length) { choices[n - 1].click(); e.preventDefault(); }
+    } else if (e.key === "Enter" || e.key === "ArrowRight" || e.key === " ") {
+      wdNext(); e.preventDefault();
+    }
+  });
+  // ==================== END KELİME ALIŞTIRMASI ====================
   // Yarı Desteler alt-menü aç/kapa
   (function () {
     var sub = document.getElementById("srs-halves-submenu");
