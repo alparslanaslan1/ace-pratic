@@ -1262,6 +1262,18 @@ h1 {
           <button class="mode-btn" id="btn-bz-srs" style="border-color:#7c3aed;color:#7c3aed;">🎓 Akıllı Öğrenme (20dk · 1s · 3s → öğrenildi)</button>
         </div>
       </div>
+      <!-- Benzersiz Son 3 Kelime (bağımsız) -->
+      <div class="menu-section">
+        <p class="menu-section-title">🔑 Benzersiz Son 3 Kelime</p>
+        <p class="menu-section-hint">Doğru cevabın son 3 kelimesi diğer şıklarda geçmeyen sorular. Bağımsız deste — benzersiz son, son 2 ve ilk sorularını da kapsar · <strong id="son3-count">–</strong> soru</p>
+        <div class="menu-buttons menu-buttons-row">
+          <button class="mode-btn" data-mode="benzersizson3">Karışık</button>
+          <button class="mode-btn" data-mode="benzersizson3_sirali">Sıralı</button>
+        </div>
+        <div class="menu-buttons" style="margin-top:12px;">
+          <button class="mode-btn" id="btn-son3-srs" style="border-color:#7c3aed;color:#7c3aed;">🎓 Akıllı Öğrenme (20dk · 1s · 3s → öğrenildi)</button>
+        </div>
+      </div>
       <!-- Kategoriler (Ayrık) -->
       <div class="menu-section">
         <p class="menu-section-title">🗂️ Kategoriler (Ayrık)</p>
@@ -3023,6 +3035,42 @@ const QUESTIONS = [
     return out;
   }
 
+  // ── Benzersiz Son 3 Kelime (bağımsız) ──
+  // Doğru cevabın SON 3 KELİMESİ tüm şıklar arasında benzersiz olan sorular.
+  // Yalnızca benzersiz (son1) / benzersizson2 / benzersizilk ailesinden olanlar dahil;
+  // bu üç grup dışındaki (diğer) sorular hariç. son1 ve son2 doğal olarak tamamen kapsanır.
+  function son3Phrase(txt) {
+    var ws = String(txt).trim().split(/\s+/);
+    var n = ws.length;
+    var slice = (n < 3) ? ws : ws.slice(n - 3);
+    return slice.join(" ").toLowerCase().replace(/[^a-z0-9 ]/gi, "").replace(/\s+/g, " ").trim();
+  }
+  var _son3Pool = null;
+  function getSon3Pool() {
+    if (_son3Pool) return _son3Pool;
+    // Tek cevaplı soruların TÜM şıkları üzerinden son-3-kelime imzalarını say
+    var count = {};
+    QUESTIONS.forEach(function (q) {
+      if (q.correct.length !== 1) return;
+      var seen = {};
+      Object.keys(q.options).forEach(function (k) {
+        var opt = q.options[k];
+        if (!opt) return;
+        var p = son3Phrase(opt);
+        if (p && !seen[p]) { seen[p] = 1; count[p] = (count[p] || 0) + 1; }
+      });
+    });
+    _son3Pool = QUESTIONS.filter(function (q) {
+      if (q.correct.length !== 1) return false;
+      var g = q.groups || [];
+      var inFamily = g.indexOf("benzersiz") !== -1 || g.indexOf("benzersizson2") !== -1 || g.indexOf("benzersizilk") !== -1;
+      if (!inFamily) return false;
+      var p = son3Phrase(q.options[q.correct[0]] || "");
+      return count[p] === 1; // son 3 kelime imzası yalnızca bu soruda görülüyor
+    });
+    return _son3Pool;
+  }
+
   function getQuestionsForMode(mode) {
     var pool;
     var allAbovePattern = /\b(all of the above|none of the above|all of these|all of the above are correct|both a.{0,5}b)\b/i;
@@ -3133,6 +3181,10 @@ const QUESTIONS = [
       pool = QUESTIONS.filter(function (q) {
         return q.groups.indexOf("benzersiz") !== -1 && q.correct.length === 1 && bzState.wrong.indexOf(q.id) !== -1;
       });
+    } else if (mode === "benzersizson3") {
+      pool = shuffleArray(getSon3Pool().slice());
+    } else if (mode === "benzersizson3_sirali") {
+      pool = getSon3Pool().slice().sort(function (a, b) { return a.id - b.id; });
     } else if (mode.indexOf("benzersiz_h") === 0) {
       // Benzersiz son kelime — yarı desteler (id sırasına göre ilk 40 / son 40)
       var bzAll = QUESTIONS.filter(function (q) {
@@ -4548,6 +4600,19 @@ const QUESTIONS = [
   if (btnBzSrs) {
     btnBzSrs.addEventListener("click", function () {
       startSrs(BENZERSIZ_SRS_POOL, "🔑 Benzersiz Son Kelime", false, {
+        steps: [20 * 60e3, 60 * 60e3, 3 * 3600e3],
+        wrongMs: 10 * 60e3,
+        batchSize: 15
+      });
+    });
+  }
+  // Benzersiz Son 3 Kelime — adet + Akıllı Öğrenme
+  var son3CountEl = document.getElementById("son3-count");
+  if (son3CountEl) son3CountEl.textContent = getSon3Pool().length;
+  var btnSon3Srs = document.getElementById("btn-son3-srs");
+  if (btnSon3Srs) {
+    btnSon3Srs.addEventListener("click", function () {
+      startSrs(getSon3Pool(), "🔑 Benzersiz Son 3 Kelime", false, {
         steps: [20 * 60e3, 60 * 60e3, 3 * 3600e3],
         wrongMs: 10 * 60e3,
         batchSize: 15
